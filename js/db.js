@@ -35,6 +35,39 @@ const DB = {
     return this.getCategorias().find(c => c.id === id) || null;
   },
 
+  crearCategoria(nombre) {
+    const cats = this.getCategorias();
+    if (cats.find(c => c.nombre.toLowerCase() === nombre.toLowerCase())) {
+      return { ok: false, error: 'Ya existe una categoría con ese nombre.' };
+    }
+    const nueva = { id: this._nextId('categorias'), nombre };
+    cats.push(nueva);
+    this._set('categorias', cats);
+    return { ok: true, data: nueva };
+  },
+
+  editarCategoria(id, nombre) {
+    const cats = this.getCategorias();
+    const idx  = cats.findIndex(c => c.id === id);
+    if (idx === -1) return { ok: false, error: 'Categoría no encontrada.' };
+    if (cats.find(c => c.nombre.toLowerCase() === nombre.toLowerCase() && c.id !== id)) {
+      return { ok: false, error: 'Ya existe una categoría con ese nombre.' };
+    }
+    cats[idx].nombre = nombre;
+    this._set('categorias', cats);
+    return { ok: true, data: cats[idx] };
+  },
+
+  borrarCategoria(id) {
+    const conProductos = this.getArticulos().some(a => a.idCategoria === id);
+    if (conProductos) return { ok: false, error: 'No se puede eliminar: hay productos en esta categoría.' };
+    const cats   = this.getCategorias();
+    const nuevas = cats.filter(c => c.id !== id);
+    if (nuevas.length === cats.length) return { ok: false, error: 'Categoría no encontrada.' };
+    this._set('categorias', nuevas);
+    return { ok: true };
+  },
+
   // ── USUARIOS ──────────────────────────────────────────────
   // { id, nombre, email, password, idRol }
 

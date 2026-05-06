@@ -148,6 +148,41 @@
       </div>
     </section>
 
+    <!-- ── GESTIÓN DE CATEGORÍAS ────────────────────── -->
+    <section class="admin-section">
+      <h2 id="cat-form-titulo">Agregar Categoría</h2>
+
+      <div id="cat-alerta" class="alerta" style="display:none"></div>
+
+      <div class="admin-form" style="margin-bottom:28px;">
+        <input type="hidden" id="cat-edit-id">
+        <div class="campo">
+          <label for="cat-nombre">Nombre de la categoría</label>
+          <input type="text" id="cat-nombre" placeholder="Ej: Reptil">
+        </div>
+        <div class="admin-form-acciones">
+          <button id="cat-btn-guardar" class="btn-primario" onclick="guardarCategoria()">Agregar Categoría</button>
+          <button id="cat-btn-cancelar" class="btn-secundario" style="display:none" onclick="cancelarEdicionCategoria()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="tabla-wrapper">
+        <table class="admin-tabla">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Productos</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-categorias">
+            <!-- Se llena con JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ── HISTORIAL DE COMPRAS ───────────────────────── -->
     <section class="admin-section">
       <h2>Historial de Compras</h2>
@@ -473,9 +508,89 @@
       renderTablaUsuarios();
     }
 
+    // ── Categorías ────────────────────────────────────────
+
+    function mostrarAlertaCat(texto, tipo = 'error') {
+      const el = document.getElementById('cat-alerta');
+      el.textContent   = texto;
+      el.className     = `alerta alerta-${tipo}`;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    function renderTablaCategorias() {
+      const cats      = DB.getCategorias();
+      const articulos = DB.getArticulos();
+      const tbody     = document.getElementById('tbody-categorias');
+
+      tbody.innerHTML = cats.map(c => {
+        const total = articulos.filter(a => a.idCategoria === c.id).length;
+        return `
+          <tr>
+            <td>${c.id}</td>
+            <td>${c.nombre}</td>
+            <td>${total}</td>
+            <td>
+              <button class="btn-tabla editar" onclick="iniciarEdicionCategoria(${c.id})">Editar</button>
+              <button class="btn-tabla borrar" onclick="borrarCategoriaAdmin(${c.id})"
+                ${total > 0 ? 'disabled title="Tiene productos asignados"' : ''}>Borrar</button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function guardarCategoria() {
+      const nombre = document.getElementById('cat-nombre').value.trim();
+      const editId = document.getElementById('cat-edit-id').value;
+
+      if (!nombre) { mostrarAlertaCat('Ingresá un nombre para la categoría.'); return; }
+
+      const resultado = editId
+        ? DB.editarCategoria(parseInt(editId), nombre)
+        : DB.crearCategoria(nombre);
+
+      if (!resultado.ok) { mostrarAlertaCat(resultado.error); return; }
+
+      mostrarAlertaCat(editId ? 'Categoría actualizada.' : 'Categoría creada.', 'exito');
+      cancelarEdicionCategoria();
+      renderTablaCategorias();
+      llenarCategorias();   // actualiza el select de productos
+    }
+
+    function iniciarEdicionCategoria(id) {
+      const cat = DB.getCategoriaById(id);
+      if (!cat) return;
+      document.getElementById('cat-edit-id').value  = cat.id;
+      document.getElementById('cat-nombre').value   = cat.nombre;
+      document.getElementById('cat-form-titulo').textContent  = 'Editar Categoría';
+      document.getElementById('cat-btn-guardar').textContent  = 'Guardar Cambios';
+      document.getElementById('cat-btn-cancelar').style.display = 'inline-block';
+      window.scrollTo({ top: document.getElementById('cat-form-titulo').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    function cancelarEdicionCategoria() {
+      document.getElementById('cat-edit-id').value  = '';
+      document.getElementById('cat-nombre').value   = '';
+      document.getElementById('cat-form-titulo').textContent  = 'Agregar Categoría';
+      document.getElementById('cat-btn-guardar').textContent  = 'Agregar Categoría';
+      document.getElementById('cat-btn-cancelar').style.display = 'none';
+    }
+
+    function borrarCategoriaAdmin(id) {
+      const cat = DB.getCategoriaById(id);
+      if (!cat) return;
+      if (!confirm(`¿Borrar la categoría "${cat.nombre}"?`)) return;
+      const resultado = DB.borrarCategoria(id);
+      if (!resultado.ok) { mostrarAlertaCat(resultado.error); return; }
+      mostrarAlertaCat('Categoría eliminada.', 'exito');
+      renderTablaCategorias();
+      llenarCategorias();
+    }
+
     // ── Inicializar ────────────────────────────────────────
     llenarCategorias();
     renderTablaProductos();
+    renderTablaCategorias();
     renderTablaCompras();
     renderTablaUsuarios();
   </script>
