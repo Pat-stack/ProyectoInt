@@ -47,7 +47,7 @@ input, select, textarea { font: inherit; }
   display: flex;
   align-items: center;
 }
-.nav-logo-img { height: 46px; width: auto; }
+.nav-logo-img { height: 58px; width: auto; }
 
 .navbar nav {
   display: flex;
@@ -406,7 +406,7 @@ input, select, textarea { font: inherit; }
   justify-content: center;
   gap: 35px;
   flex-wrap: wrap;
-  padding: 0;
+  padding: 0 80px;
 }
 .destacados-section .producto-card { width: 280px; flex-shrink: 0; }
 .destacados-section .producto-img  { height: 220px; object-fit: contain; }
