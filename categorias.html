@@ -73,13 +73,12 @@
       window.location.href = 'index.html';
     });
 
-    const EMOJIS = { Perro: '🐕', Gato: '🐈', Ave: '🦜', Conejo: '🐇', Hamsters: '🐹' };
-    const DESCRIPCIONES = {
-      Perro:    'Alimentos, accesorios, juguetes y más para tu fiel compañero.',
-      Gato:     'Todo lo que tu felino necesita para estar feliz y saludable.',
-      Ave:      'Semillas, jaulas y accesorios para tus aves.',
-      Conejo:   'Pellets, juguetes y cuidados especiales para tu conejito.',
-      Hamsters: 'Mezclas de semillas, ruedas y todo para tu pequeño roedor.'
+    const IMAGENES = {
+      Perro:    'imagenes_pagina/Perro.jpg',
+      Gato:     'imagenes_pagina/gatito.jpg',
+      Ave:      'imagenes_pagina/aves.jpg',
+      Conejo:   'imagenes_pagina/Conejo.png',
+      Hamsters: 'imagenes_pagina/hamster.jpg'
     };
 
     const cats = DB.getCategorias();
@@ -87,11 +86,8 @@
 
     grid.innerHTML = cats.map(c => `
       <a href="catalogo.html?categoria=${encodeURIComponent(c.nombre)}" class="cat-card-grande">
-        <span class="cat-emoji-grande">${EMOJIS[c.nombre] || '🐾'}</span>
-        <div class="cat-info">
-          <h3>${c.nombre}s</h3>
-          <p>${DESCRIPCIONES[c.nombre] || ''}</p>
-        </div>
+        <img src="${IMAGENES[c.nombre] || ''}" alt="${c.nombre}">
+        <h3>${c.nombre}s</h3>
       </a>
     `).join('');
   </script>
