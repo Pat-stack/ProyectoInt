@@ -532,8 +532,7 @@
             <td>${total}</td>
             <td>
               <button class="btn-tabla editar" onclick="iniciarEdicionCategoria(${c.id})">Editar</button>
-              <button class="btn-tabla borrar" onclick="borrarCategoriaAdmin(${c.id})"
-                ${total > 0 ? 'disabled title="Tiene productos asignados"' : ''}>Borrar</button>
+              <button class="btn-tabla borrar" onclick="borrarCategoriaAdmin(${c.id})">Borrar</button>
             </td>
           </tr>`;
       }).join('');
