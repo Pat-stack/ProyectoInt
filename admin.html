@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrador — El Norteño Store</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <!-- ── Navbar ─────────────────────────────────────────── -->
+  <header class="navbar">
+    <a href="index.html" class="nav-logo">🐾 El Norteño Store</a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="#" id="btn-logout">Salir</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <h1>Panel Administrador</h1>
+
+    <!-- ── FORMULARIO AGREGAR ─────────────────────────── -->
+    <section class="admin-section">
+      <h2 id="form-titulo">Agregar Producto</h2>
+      <div id="form-alerta" class="alerta" style="display:none"></div>
+
+      <div class="admin-form">
+        <input type="hidden" id="edit-id">
+
+        <div class="campo">
+          <label for="f-nombre">Nombre del producto</label>
+          <input type="text" id="f-nombre" placeholder="Nombre del producto">
+        </div>
+
+        <div class="campo">
+          <label for="f-desc">Descripción</label>
+          <input type="text" id="f-desc" placeholder="Descripción breve">
+        </div>
+
+        <div class="campos-2col">
+          <div class="campo">
+            <label for="f-precio">Precio (MXN)</label>
+            <input type="number" id="f-precio" min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div class="campo">
+            <label for="f-stock">Stock</label>
+            <input type="number" id="f-stock" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="f-categoria">Categoría</label>
+          <select id="f-categoria">
+            <option value="">Selecciona una categoría</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="f-imagen">Imagen del producto</label>
+          <input type="file" id="f-imagen" accept="image/*">
+          <div id="imagen-preview-container" style="display:none; margin-top:8px;">
+            <img id="imagen-preview" style="max-width:120px; max-height:120px; border-radius:6px;">
+          </div>
+        </div>
+
+        <div class="admin-form-acciones">
+          <button id="btn-guardar" class="btn-primario" onclick="guardarProducto()">Agregar Producto</button>
+          <button id="btn-cancelar" class="btn-secundario" style="display:none" onclick="cancelarEdicion()">Cancelar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TABLA INVENTARIO ───────────────────────────── -->
+    <section class="admin-section">
+      <h2>Inventario de Productos</h2>
+      <div class="tabla-wrapper">
+        <table class="admin-tabla" id="tabla-productos">
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Nombre</th>
+              <th>Precio</th>
+              <th>Categoría</th>
+              <th>Stock</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-productos">
+            <!-- Se llena con JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── HISTORIAL DE COMPRAS ───────────────────────── -->
+    <section class="admin-section">
+      <h2>Historial de Compras</h2>
+      <div class="tabla-wrapper">
+        <table class="admin-tabla" id="tabla-compras">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Fecha</th>
+              <th>Productos</th>
+              <th>Subtotal</th>
+              <th>IVA</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-compras">
+            <!-- Se llena con JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    DB.init();
+
+    // Solo admin puede acceder
+    Auth.requerirLogin('login.html');
+    Auth.requerirAdmin('index.html');
+
+    document.getElementById('btn-logout').addEventListener('click', e => {
+      e.preventDefault();
+      Auth.logout();
+      window.location.href = 'index.html';
+    });
+
+    // ── Helpers ───────────────────────────────────────────
+    let imagenBase64Actual = '';   // imagen seleccionada o existente en edición
+
+    function mostrarAlerta(texto, tipo = 'error') {
+      const el = document.getElementById('form-alerta');
+      el.textContent  = texto;
+      el.className    = `alerta alerta-${tipo}`;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    // ── Llenar select de categorías ───────────────────────
+    function llenarCategorias() {
+      const sel  = document.getElementById('f-categoria');
+      const cats = DB.getCategorias();
+      cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value       = c.id;
+        opt.textContent = c.nombre;
+        sel.appendChild(opt);
+      });
+    }
+
+    // ── Preview de imagen ──────────────────────────────────
+    document.getElementById('f-imagen').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        imagenBase64Actual = e.target.result;
+        const preview = document.getElementById('imagen-preview');
+        const cont    = document.getElementById('imagen-preview-container');
+        preview.src   = imagenBase64Actual;
+        cont.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ── Renderizar tabla de productos ──────────────────────
+    function renderTablaProductos() {
+      const productos = DB.getArticulos();
+      const cats      = DB.getCategorias();
+      const catMap    = {};
+      cats.forEach(c => { catMap[c.id] = c.nombre; });
+
+      const tbody = document.getElementById('tbody-productos');
+      if (productos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">No hay productos.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = productos.map(p => `
+        <tr>
+          <td>
+            <img src="${p.imagenBase64 || 'img/placeholder.png'}"
+                 alt="${p.nombre}"
+                 style="width:50px;height:50px;object-fit:cover;border-radius:4px;">
+          </td>
+          <td>${p.nombre}</td>
+          <td>$${p.precio.toFixed(2)} MXN</td>
+          <td>${catMap[p.idCategoria] || '—'}</td>
+          <td>${p.stock}</td>
+          <td>
+            <button class="btn-tabla editar" onclick="iniciarEdicion(${p.id})">Editar</button>
+            <button class="btn-tabla borrar" onclick="borrarProducto(${p.id})">Borrar</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // ── Renderizar tabla de compras ────────────────────────
+    function renderTablaCompras() {
+      const compras   = DB.getCompras();
+      const usuarios  = DB.getUsuarios();
+      const usuMap    = {};
+      usuarios.forEach(u => { usuMap[u.id] = u.nombre; });
+
+      const tbody = document.getElementById('tbody-compras');
+      if (compras.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">Sin compras aún.</td></tr>';
+        return;
+      }
+
+      // Ordenar más reciente primero
+      const ordenadas = [...compras].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+      tbody.innerHTML = ordenadas.map(c => {
+        const fecha       = new Date(c.fecha).toLocaleString('es-MX');
+        const productos   = c.detalles.map(d => `${d.nombre} ×${d.cantidad}`).join(', ');
+        const cliente     = usuMap[c.idUsuario] || `Usuario #${c.idUsuario}`;
+        return `
+          <tr>
+            <td>#${c.id}</td>
+            <td>${cliente}</td>
+            <td>${fecha}</td>
+            <td class="compra-detalles">${productos}</td>
+            <td>$${c.subtotal.toFixed(2)}</td>
+            <td>$${c.iva.toFixed(2)}</td>
+            <td><strong>$${c.total.toFixed(2)} MXN</strong></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ── Guardar (crear o editar) ───────────────────────────
+    function guardarProducto() {
+      const editId    = document.getElementById('edit-id').value;
+      const nombre    = document.getElementById('f-nombre').value.trim();
+      const desc      = document.getElementById('f-desc').value.trim();
+      const precio    = document.getElementById('f-precio').value;
+      const stock     = document.getElementById('f-stock').value;
+      const idCat     = parseInt(document.getElementById('f-categoria').value);
+
+      if (!nombre || !precio || !stock || !idCat) {
+        mostrarAlerta('Por favor completa todos los campos obligatorios.');
+        return;
+      }
+      if (parseFloat(precio) < 0 || parseInt(stock) < 0) {
+        mostrarAlerta('El precio y el stock deben ser valores positivos.');
+        return;
+      }
+
+      if (editId) {
+        // Editar
+        const campos = {
+          nombre, descripcion: desc,
+          precio: parseFloat(precio),
+          stock:  parseInt(stock),
+          idCategoria: idCat
+        };
+        if (imagenBase64Actual) campos.imagenBase64 = imagenBase64Actual;
+
+        const resultado = DB.editarArticulo(parseInt(editId), campos);
+        if (!resultado.ok) { mostrarAlerta(resultado.error); return; }
+        mostrarAlerta('Producto actualizado con éxito.', 'exito');
+
+      } else {
+        // Crear
+        const resultado = DB.crearArticulo({
+          nombre, descripcion: desc,
+          precio: parseFloat(precio),
+          stock:  parseInt(stock),
+          idCategoria: idCat,
+          imagenBase64: imagenBase64Actual
+        });
+        if (!resultado.ok) { mostrarAlerta(resultado.error); return; }
+        mostrarAlerta('Producto creado con éxito.', 'exito');
+      }
+
+      limpiarFormulario();
+      renderTablaProductos();
+    }
+
+    // ── Iniciar edición ────────────────────────────────────
+    function iniciarEdicion(id) {
+      const p = DB.getArticuloById(id);
+      if (!p) return;
+
+      document.getElementById('edit-id').value    = p.id;
+      document.getElementById('f-nombre').value   = p.nombre;
+      document.getElementById('f-desc').value     = p.descripcion;
+      document.getElementById('f-precio').value   = p.precio;
+      document.getElementById('f-stock').value    = p.stock;
+      document.getElementById('f-categoria').value = p.idCategoria;
+
+      imagenBase64Actual = p.imagenBase64 || '';
+
+      const preview = document.getElementById('imagen-preview');
+      const cont    = document.getElementById('imagen-preview-container');
+      if (imagenBase64Actual) {
+        preview.src        = imagenBase64Actual;
+        cont.style.display = 'block';
+      } else {
+        cont.style.display = 'none';
+      }
+
+      document.getElementById('form-titulo').textContent    = 'Editar Producto';
+      document.getElementById('btn-guardar').textContent    = 'Guardar Cambios';
+      document.getElementById('btn-cancelar').style.display = 'inline-block';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Cancelar edición ──────────────────────────────────
+    function cancelarEdicion() {
+      limpiarFormulario();
+    }
+
+    function limpiarFormulario() {
+      document.getElementById('edit-id').value    = '';
+      document.getElementById('f-nombre').value   = '';
+      document.getElementById('f-desc').value     = '';
+      document.getElementById('f-precio').value   = '';
+      document.getElementById('f-stock').value    = '';
+      document.getElementById('f-categoria').value = '';
+      document.getElementById('f-imagen').value    = '';
+      imagenBase64Actual = '';
+      document.getElementById('imagen-preview-container').style.display = 'none';
+      document.getElementById('form-titulo').textContent    = 'Agregar Producto';
+      document.getElementById('btn-guardar').textContent    = 'Agregar Producto';
+      document.getElementById('btn-cancelar').style.display = 'none';
+    }
+
+    // ── Borrar producto ────────────────────────────────────
+    function borrarProducto(id) {
+      const p = DB.getArticuloById(id);
+      if (!p) return;
+      if (!confirm(`¿Borrar "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+      const resultado = DB.borrarArticulo(id);
+      if (!resultado.ok) { mostrarAlerta(resultado.error); return; }
+      mostrarAlerta('Producto eliminado.', 'exito');
+      renderTablaProductos();
+    }
+
+    // ── Inicializar ────────────────────────────────────────
+    llenarCategorias();
+    renderTablaProductos();
+    renderTablaCompras();
+  </script>
+</body>
+</html>

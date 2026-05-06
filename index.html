@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El Norteño Store — Inicio</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <!-- ── Navbar ─────────────────────────────────────────── -->
+  <header class="navbar">
+    <a href="index.html" class="nav-logo">🐾 El Norteño Store</a>
+    <nav>
+      <a href="categorias.html">Productos</a>
+      <a href="admin.html" data-solo-admin>Administrador</a>
+
+      <!-- Sin sesión -->
+      <a href="login.html"   data-solo-invitado>👤 Iniciar Sesión</a>
+
+      <!-- Con sesión -->
+      <span data-solo-sesion data-nombre-usuario class="nav-bienvenida"></span>
+      <a href="#" data-solo-sesion id="btn-logout">Salir</a>
+    </nav>
+
+    <!-- Carrito (solo con sesión) -->
+    <button class="btn-carrito-flotante" data-solo-sesion onclick="Carrito.toggle()">
+      🛒 <span id="carrito-contador" class="carrito-badge">0</span>
+    </button>
+  </header>
+
+  <!-- ── Hero ───────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-texto">
+      <h1>¿Buscas los mejores<br><span>productos</span><br>para tu mascota?</h1>
+      <p>Aprovecha nuestras promociones y ofertas</p>
+      <a href="categorias.html" class="btn-primario">Ver productos</a>
+    </div>
+    <div class="hero-imagen">
+      <div class="hero-emoji">🐕</div>
+    </div>
+  </section>
+
+  <!-- ── Sección de categorías rápidas ─────────────────── -->
+  <section class="categorias-rapidas">
+    <h2>Nuestras Categorías</h2>
+    <div class="cats-grid" id="cats-grid">
+      <!-- Se llena con JS -->
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-col">
+      <h3>Contacto</h3>
+      <p>Rómulo Garza 400, Fidel Velázquez, San Nicolás</p>
+      <p>📞 +52 81 8112 6686</p>
+      <p>✉️ elnortenostore@gmail.com</p>
+      <p>Lun–Dom: 13:00 – 20:00</p>
+    </div>
+    <div class="footer-col">
+      <h3>Categorías</h3>
+      <ul>
+        <li><a href="catalogo.html?categoria=Perro">Perros</a></li>
+        <li><a href="catalogo.html?categoria=Gato">Gatos</a></li>
+        <li><a href="catalogo.html?categoria=Ave">Aves</a></li>
+        <li><a href="catalogo.html?categoria=Hamsters">Roedores</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Servicios</h3>
+      <ul><li>Delivery</li><li>Promociones</li><li>Asesoría</li></ul>
+    </div>
+    <div class="footer-bottom">
+      © 2026 El Norteño Store | Todos los derechos reservados
+    </div>
+  </footer>
+
+  <!-- ── Modal carrito ──────────────────────────────────── -->
+  <div id="carrito-overlay" onclick="Carrito.cerrar()"></div>
+  <div id="carrito-modal">
+    <div class="carrito-header">
+      <h2>🛒 Tu Carrito</h2>
+      <button onclick="Carrito.cerrar()">×</button>
+    </div>
+    <div id="carrito-contenido" class="carrito-contenido"></div>
+    <div class="carrito-footer">
+      <div class="carrito-desglose">
+        <span>Subtotal:</span><span id="carrito-subtotal">$0.00 MXN</span>
+      </div>
+      <div class="carrito-desglose">
+        <span>IVA (16%):</span><span id="carrito-iva">$0.00 MXN</span>
+      </div>
+      <div class="carrito-desglose carrito-total-row">
+        <span>Total:</span><span id="carrito-total">$0.00 MXN</span>
+      </div>
+      <button id="carrito-btn-comprar" class="btn-primario btn-bloque" onclick="Carrito.finalizar()">
+        Finalizar Compra
+      </button>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/carrito.js"></script>
+  <script>
+    DB.init();
+    Auth.aplicarNavbar();
+    Carrito.init();
+
+    // Logout
+    document.getElementById('btn-logout')?.addEventListener('click', e => {
+      e.preventDefault();
+      Auth.logout();
+      window.location.reload();
+    });
+
+    // Emojis por categoría
+    const EMOJIS = { Perro: '🐕', Gato: '🐈', Ave: '🦜', Conejo: '🐇', Hamsters: '🐹' };
+
+    // Llenar grid de categorías
+    const cats = DB.getCategorias();
+    const grid  = document.getElementById('cats-grid');
+    grid.innerHTML = cats.map(c => `
+      <a href="catalogo.html?categoria=${encodeURIComponent(c.nombre)}" class="cat-card">
+        <span class="cat-emoji">${EMOJIS[c.nombre] || '🐾'}</span>
+        <span>${c.nombre}s</span>
+      </a>
+    `).join('');
+  </script>
+</body>
+</html>

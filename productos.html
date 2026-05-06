@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos Destacados — El Norteño Store</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <!-- ── Navbar ─────────────────────────────────────────── -->
+  <header class="navbar">
+    <a href="index.html" class="nav-logo">🐾 El Norteño Store</a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="categorias.html" class="activo">Productos</a>
+      <a href="admin.html" data-solo-admin>Administrador</a>
+      <a href="login.html" data-solo-invitado>👤 Iniciar Sesión</a>
+      <span data-solo-sesion data-nombre-usuario class="nav-bienvenida"></span>
+      <a href="#" data-solo-sesion id="btn-logout">Salir</a>
+    </nav>
+    <button class="btn-carrito-flotante" data-solo-sesion onclick="Carrito.toggle()">
+      🛒 <span id="carrito-contador" class="carrito-badge">0</span>
+    </button>
+  </header>
+
+  <!-- ── Destacados ─────────────────────────────────────── -->
+  <section class="destacados-section">
+    <h1>Productos Destacados</h1>
+    <p class="destacados-sub">Una selección especial de lo que más les gusta a tus mascotas</p>
+    <div class="productos-grid" id="destacados-grid">
+      <!-- Se llena con JS (3 productos aleatorios) -->
+    </div>
+    <div style="text-align:center; margin-top:32px;">
+      <a href="catalogo.html" class="btn-primario">Ver todos los productos</a>
+    </div>
+  </section>
+
+  <!-- ── Sección informativa ────────────────────────────── -->
+  <section class="info-section">
+    <div class="info-imagen">
+      <span style="font-size:120px">🐾</span>
+    </div>
+    <div class="info-texto">
+      <h2>Cuidado responsable de los animales</h2>
+      <p>Tener una mascota es una gran alegría, pero también una responsabilidad.
+         Todos los animales, desde perros y gatos hasta aves o pequeños roedores,
+         necesitan una alimentación adecuada, revisiones veterinarias periódicas
+         y mucho cariño.</p>
+      <p>Es importante brindarles un ambiente limpio, seguro y con estímulos que
+         les permitan desarrollarse física y mentalmente.</p>
+      <p><strong>Recuerda:</strong> una mascota sana y feliz es parte de una familia feliz.</p>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-col">
+      <h3>Contacto</h3>
+      <p>Rómulo Garza 400, Fidel Velázquez, San Nicolás</p>
+      <p>📞 +52 81 8112 6686</p>
+      <p>✉️ elnortenostore@gmail.com</p>
+      <p>Lun–Dom: 13:00 – 20:00</p>
+    </div>
+    <div class="footer-col">
+      <h3>Categorías</h3>
+      <ul>
+        <li><a href="catalogo.html?categoria=Perro">Perros</a></li>
+        <li><a href="catalogo.html?categoria=Gato">Gatos</a></li>
+        <li><a href="catalogo.html?categoria=Ave">Aves</a></li>
+        <li><a href="catalogo.html?categoria=Hamsters">Roedores</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Servicios</h3>
+      <ul><li>Delivery</li><li>Promociones</li><li>Asesoría</li></ul>
+    </div>
+    <div class="footer-bottom">© 2026 El Norteño Store | Todos los derechos reservados</div>
+  </footer>
+
+  <!-- ── Modal carrito ──────────────────────────────────── -->
+  <div id="carrito-overlay" onclick="Carrito.cerrar()"></div>
+  <div id="carrito-modal">
+    <div class="carrito-header">
+      <h2>🛒 Tu Carrito</h2>
+      <button onclick="Carrito.cerrar()">×</button>
+    </div>
+    <div id="carrito-contenido" class="carrito-contenido"></div>
+    <div class="carrito-footer">
+      <div class="carrito-desglose">
+        <span>Subtotal:</span><span id="carrito-subtotal">$0.00 MXN</span>
+      </div>
+      <div class="carrito-desglose">
+        <span>IVA (16%):</span><span id="carrito-iva">$0.00 MXN</span>
+      </div>
+      <div class="carrito-desglose carrito-total-row">
+        <span>Total:</span><span id="carrito-total">$0.00 MXN</span>
+      </div>
+      <button id="carrito-btn-comprar" class="btn-primario btn-bloque" onclick="Carrito.finalizar()">
+        Finalizar Compra
+      </button>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/carrito.js"></script>
+  <script>
+    DB.init();
+    Auth.aplicarNavbar();
+    Carrito.init();
+
+    document.getElementById('btn-logout')?.addEventListener('click', e => {
+      e.preventDefault();
+      Auth.logout();
+      window.location.href = 'index.html';
+    });
+
+    function imgSrc(art) {
+      return art.imagenBase64 || 'img/placeholder.png';
+    }
+
+    function agregarAlCarrito(idArticulo) {
+      const ok = Carrito.agregar(idArticulo);
+      if (ok) {
+        const btns = document.querySelectorAll(`[onclick="agregarAlCarrito(${idArticulo})"]`);
+        btns.forEach(btn => {
+          const texto = btn.textContent;
+          btn.textContent = '✓ Añadido';
+          btn.disabled = true;
+          setTimeout(() => { btn.textContent = texto; btn.disabled = false; }, 1500);
+        });
+      }
+    }
+
+    // 3 productos aleatorios
+    const todos = DB.getArticulos();
+    const cats  = DB.getCategorias();
+    const catMap = {};
+    cats.forEach(c => { catMap[c.id] = c.nombre; });
+
+    const mezcla = [...todos].sort(() => Math.random() - 0.5).slice(0, 3);
+
+    document.getElementById('destacados-grid').innerHTML = mezcla.map(p => `
+      <div class="producto-card">
+        <img src="${imgSrc(p)}" alt="${p.nombre}" class="producto-img">
+        <div class="producto-info">
+          <span class="producto-cat">${catMap[p.idCategoria] || ''}</span>
+          <h3 class="producto-nombre">${p.nombre}</h3>
+          <p class="producto-desc">${p.descripcion}</p>
+          <div class="producto-footer">
+            <span class="producto-precio">$${p.precio.toFixed(2)} MXN</span>
+            <span class="producto-stock ${p.stock === 0 ? 'sin-stock' : ''}">
+              ${p.stock === 0 ? 'Sin stock' : `Stock: ${p.stock}`}
+            </span>
+          </div>
+          <button
+            class="btn-agregar-carrito ${p.stock === 0 ? 'deshabilitado' : ''}"
+            onclick="agregarAlCarrito(${p.id})"
+            ${p.stock === 0 ? 'disabled' : ''}>
+            🛒 Añadir al carrito
+          </button>
+        </div>
+      </div>
+    `).join('');
+  </script>
+</body>
+</html>

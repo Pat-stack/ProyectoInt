@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo — El Norteño Store</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <!-- ── Navbar ─────────────────────────────────────────── -->
+  <header class="navbar">
+    <a href="index.html" class="nav-logo">🐾 El Norteño Store</a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="categorias.html">Categorías</a>
+      <a href="admin.html" data-solo-admin>Administrador</a>
+      <a href="login.html" data-solo-invitado>👤 Iniciar Sesión</a>
+      <span data-solo-sesion data-nombre-usuario class="nav-bienvenida"></span>
+      <a href="#" data-solo-sesion id="btn-logout">Salir</a>
+    </nav>
+    <button class="btn-carrito-flotante" data-solo-sesion onclick="Carrito.toggle()">
+      🛒 <span id="carrito-contador" class="carrito-badge">0</span>
+    </button>
+  </header>
+
+  <!-- ── Filtros y buscador ─────────────────────────────── -->
+  <div class="catalogo-barra">
+    <h2 id="catalogo-titulo">Todos los productos</h2>
+    <input type="text" id="buscador" placeholder="🔍 Buscar productos..." class="buscador-input">
+    <div class="filtros-cats" id="filtros-cats">
+      <!-- Se llena con JS -->
+    </div>
+  </div>
+
+  <!-- ── Grid de productos ──────────────────────────────── -->
+  <main class="productos-grid" id="productos-grid">
+    <p class="cargando">Cargando productos...</p>
+  </main>
+
+  <!-- ── Modal carrito ──────────────────────────────────── -->
+  <div id="carrito-overlay" onclick="Carrito.cerrar()"></div>
+  <div id="carrito-modal">
+    <div class="carrito-header">
+      <h2>🛒 Tu Carrito</h2>
+      <button onclick="Carrito.cerrar()">×</button>
+    </div>
+    <div id="carrito-contenido" class="carrito-contenido"></div>
+    <div class="carrito-footer">
+      <div class="carrito-desglose">
+        <span>Subtotal:</span><span id="carrito-subtotal">$0.00 MXN</span>
+      </div>
+      <div class="carrito-desglose">
+        <span>IVA (16%):</span><span id="carrito-iva">$0.00 MXN</span>
+      </div>
+      <div class="carrito-desglose carrito-total-row">
+        <span>Total:</span><span id="carrito-total">$0.00 MXN</span>
+      </div>
+      <button id="carrito-btn-comprar" class="btn-primario btn-bloque" onclick="Carrito.finalizar()">
+        Finalizar Compra
+      </button>
+    </div>
+  </div>
+
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/carrito.js"></script>
+  <script>
+    DB.init();
+    Auth.aplicarNavbar();
+    Carrito.init();
+
+    document.getElementById('btn-logout')?.addEventListener('click', e => {
+      e.preventDefault();
+      Auth.logout();
+      window.location.href = 'index.html';
+    });
+
+    // ── Estado ───────────────────────────────────────────
+    let todosLosProductos = [];
+    let categoriaActiva   = null;  // null = todas
+
+    // ── Leer ?categoria= del query string ───────────────
+    const params = new URLSearchParams(window.location.search);
+    const catParam = params.get('categoria');
+
+    // ── Helpers ─────────────────────────────────────────
+    const EMOJIS = { Perro: '🐕', Gato: '🐈', Ave: '🦜', Conejo: '🐇', Hamsters: '🐹' };
+
+    function imgSrc(art) {
+      return art.imagenBase64 || 'img/placeholder.png';
+    }
+
+    function renderProductos(lista) {
+      const grid = document.getElementById('productos-grid');
+      if (lista.length === 0) {
+        grid.innerHTML = '<p class="sin-resultados">No se encontraron productos.</p>';
+        return;
+      }
+
+      // Enriquecer con nombre de categoría
+      const cats = DB.getCategorias();
+      const catMap = {};
+      cats.forEach(c => { catMap[c.id] = c.nombre; });
+
+      grid.innerHTML = lista.map(p => `
+        <div class="producto-card">
+          <img src="${imgSrc(p)}" alt="${p.nombre}" class="producto-img">
+          <div class="producto-info">
+            <span class="producto-cat">${catMap[p.idCategoria] || ''}</span>
+            <h3 class="producto-nombre">${p.nombre}</h3>
+            <p class="producto-desc">${p.descripcion}</p>
+            <div class="producto-footer">
+              <span class="producto-precio">$${p.precio.toFixed(2)} MXN</span>
+              <span class="producto-stock ${p.stock === 0 ? 'sin-stock' : ''}">
+                ${p.stock === 0 ? 'Sin stock' : `Stock: ${p.stock}`}
+              </span>
+            </div>
+            <button
+              class="btn-agregar-carrito ${p.stock === 0 ? 'deshabilitado' : ''}"
+              onclick="agregarAlCarrito(${p.id})"
+              ${p.stock === 0 ? 'disabled' : ''}>
+              🛒 Añadir al carrito
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filtrar() {
+      const termino = document.getElementById('buscador').value.toLowerCase().trim();
+      let lista = todosLosProductos;
+
+      if (categoriaActiva) {
+        const cat = DB.getCategorias().find(c => c.nombre.toLowerCase() === categoriaActiva.toLowerCase());
+        if (cat) lista = lista.filter(p => p.idCategoria === cat.id);
+      }
+
+      if (termino) {
+        lista = lista.filter(p => p.nombre.toLowerCase().includes(termino));
+      }
+
+      renderProductos(lista);
+    }
+
+    function agregarAlCarrito(idArticulo) {
+      const ok = Carrito.agregar(idArticulo);
+      if (ok) {
+        // Feedback visual en el botón
+        const btns = document.querySelectorAll(`[onclick="agregarAlCarrito(${idArticulo})"]`);
+        btns.forEach(btn => {
+          const texto = btn.textContent;
+          btn.textContent = '✓ Añadido';
+          btn.disabled = true;
+          setTimeout(() => { btn.textContent = texto; btn.disabled = false; }, 1500);
+        });
+      }
+    }
+
+    // ── Construir filtros de categoría ───────────────────
+    function construirFiltros() {
+      const cats  = DB.getCategorias();
+      const cont  = document.getElementById('filtros-cats');
+
+      const todas = document.createElement('button');
+      todas.textContent = 'Todas';
+      todas.className   = 'filtro-cat' + (categoriaActiva === null ? ' activo' : '');
+      todas.onclick     = () => { categoriaActiva = null; actualizarFiltros(); filtrar(); };
+      cont.appendChild(todas);
+
+      cats.forEach(c => {
+        const btn = document.createElement('button');
+        btn.textContent = `${EMOJIS[c.nombre] || ''} ${c.nombre}s`;
+        btn.className   = 'filtro-cat' + (categoriaActiva === c.nombre ? ' activo' : '');
+        btn.onclick     = () => { categoriaActiva = c.nombre; actualizarFiltros(); filtrar(); };
+        cont.appendChild(btn);
+      });
+    }
+
+    function actualizarFiltros() {
+      const btns = document.querySelectorAll('.filtro-cat');
+      btns.forEach(btn => {
+        const texto = btn.textContent.trim().replace(/^.*\s/, '').replace('s', '');
+        const esTodas = btn.textContent.trim() === 'Todas';
+        btn.classList.toggle('activo',
+          esTodas ? categoriaActiva === null : false
+        );
+      });
+      // Remarcar el activo correctamente
+      document.querySelectorAll('.filtro-cat').forEach(btn => {
+        const esTodas = btn.textContent.trim() === 'Todas';
+        if (esTodas) {
+          btn.classList.toggle('activo', categoriaActiva === null);
+        } else {
+          // Extraer nombre de categoría del texto del botón
+          const cats = DB.getCategorias();
+          cats.forEach(c => {
+            if (btn.textContent.includes(c.nombre)) {
+              btn.classList.toggle('activo', categoriaActiva === c.nombre);
+            }
+          });
+        }
+      });
+
+      // Título
+      const titulo = document.getElementById('catalogo-titulo');
+      titulo.textContent = categoriaActiva ? `${categoriaActiva}s` : 'Todos los productos';
+    }
+
+    // ── Inicialización ───────────────────────────────────
+    todosLosProductos = DB.getArticulos();
+
+    if (catParam) {
+      categoriaActiva = catParam;
+    }
+
+    construirFiltros();
+    actualizarFiltros();
+    filtrar();
+
+    document.getElementById('buscador').addEventListener('input', filtrar);
+  </script>
+</body>
+</html>

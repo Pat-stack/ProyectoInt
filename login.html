@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión — El Norteño Store</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <a href="index.html" class="nav-logo">🐾 El Norteño Store</a>
+    <nav>
+      <a href="index.html">Inicio</a>
+      <a href="registro.html">Registrarse</a>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="card form-card">
+      <h1>Iniciar Sesión</h1>
+      <p class="form-sub">Ingresa a tu cuenta para continuar</p>
+
+      <div id="mensaje-error" class="alerta alerta-error" style="display:none"></div>
+
+      <div class="campo">
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" placeholder="ejemplo@correo.com" autocomplete="email">
+      </div>
+
+      <div class="campo">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" placeholder="Tu contraseña">
+      </div>
+
+      <div class="campo-check">
+        <input type="checkbox" id="mostrar-pwd">
+        <label for="mostrar-pwd">Mostrar contraseña</label>
+      </div>
+
+      <button id="btn-login" class="btn-primario btn-bloque">Iniciar Sesión</button>
+
+      <p class="form-footer">
+        ¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a>
+      </p>
+    </div>
+  </main>
+
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    DB.init();
+
+    // Si ya hay sesión activa, redirigir al inicio
+    if (Auth.isLoggedIn()) window.location.href = 'index.html';
+
+    // Mostrar / ocultar contraseña
+    document.getElementById('mostrar-pwd').addEventListener('change', function () {
+      document.getElementById('password').type = this.checked ? 'text' : 'password';
+    });
+
+    // Login
+    document.getElementById('btn-login').addEventListener('click', () => {
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const mensajeEl = document.getElementById('mensaje-error');
+
+      mensajeEl.style.display = 'none';
+
+      if (!email || !password) {
+        mensajeEl.textContent  = 'Por favor completa todos los campos.';
+        mensajeEl.style.display = 'block';
+        return;
+      }
+
+      const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!formatoEmail.test(email)) {
+        mensajeEl.textContent  = 'El correo no tiene un formato válido.';
+        mensajeEl.style.display = 'block';
+        return;
+      }
+
+      const resultado = Auth.intentarLogin(email, password);
+
+      if (!resultado.ok) {
+        mensajeEl.textContent  = resultado.error;
+        mensajeEl.style.display = 'block';
+        return;
+      }
+
+      window.location.href = 'index.html';
+    });
+
+    // Permitir Enter en los campos
+    ['email', 'password'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('btn-login').click();
+      });
+    });
+  </script>
+</body>
+</html>
