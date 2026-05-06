@@ -93,6 +93,61 @@
       </div>
     </section>
 
+    <!-- ── GESTIÓN DE USUARIOS ──────────────────────── -->
+    <section class="admin-section">
+      <h2>Gestión de Usuarios</h2>
+
+      <div id="usuarios-alerta" class="alerta" style="display:none"></div>
+
+      <!-- Formulario crear usuario -->
+      <div class="admin-form" style="margin-bottom:28px;">
+        <div class="campos-2col">
+          <div class="campo">
+            <label for="u-nombre">Nombre completo</label>
+            <input type="text" id="u-nombre" placeholder="Nombre del usuario">
+          </div>
+          <div class="campo">
+            <label for="u-email">Correo electrónico</label>
+            <input type="email" id="u-email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+        <div class="campos-2col">
+          <div class="campo">
+            <label for="u-password">Contraseña</label>
+            <input type="password" id="u-password" placeholder="Mínimo 6 caracteres">
+          </div>
+          <div class="campo">
+            <label for="u-rol">Rol</label>
+            <select id="u-rol">
+              <option value="2">Cliente</option>
+              <option value="1">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-form-acciones">
+          <button class="btn-primario" onclick="crearUsuarioAdmin()">Crear Usuario</button>
+        </div>
+      </div>
+
+      <!-- Tabla de usuarios -->
+      <div class="tabla-wrapper">
+        <table class="admin-tabla">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-usuarios">
+            <!-- Se llena con JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ── HISTORIAL DE COMPRAS ───────────────────────── -->
     <section class="admin-section">
       <h2>Historial de Compras</h2>
@@ -346,10 +401,83 @@
       renderTablaProductos();
     }
 
+    // ── Usuarios ──────────────────────────────────────────
+
+    function mostrarAlertaUsuarios(texto, tipo = 'error') {
+      const el = document.getElementById('usuarios-alerta');
+      el.textContent   = texto;
+      el.className     = `alerta alerta-${tipo}`;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    function renderTablaUsuarios() {
+      const usuarios  = DB.getUsuarios();
+      const roles     = DB.getRoles();
+      const rolMap    = {};
+      roles.forEach(r => { rolMap[r.id] = r.nombre; });
+      const sesionId  = Auth.getSesion().id;
+
+      const tbody = document.getElementById('tbody-usuarios');
+      tbody.innerHTML = usuarios.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.nombre}</td>
+          <td>${u.email}</td>
+          <td>${rolMap[u.idRol] || u.idRol}</td>
+          <td>
+            ${u.id === sesionId
+              ? '<span style="color:#aaa;font-size:0.82rem;">Sesión actual</span>'
+              : `<button class="btn-tabla borrar" onclick="borrarUsuarioAdmin(${u.id})">Borrar</button>`
+            }
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function crearUsuarioAdmin() {
+      const nombre   = document.getElementById('u-nombre').value.trim();
+      const email    = document.getElementById('u-email').value.trim();
+      const password = document.getElementById('u-password').value;
+      const idRol    = parseInt(document.getElementById('u-rol').value);
+
+      if (!nombre || !email || !password) {
+        mostrarAlertaUsuarios('Completa todos los campos.'); return;
+      }
+      if (password.length < 6) {
+        mostrarAlertaUsuarios('La contraseña debe tener al menos 6 caracteres.'); return;
+      }
+
+      const resultado = DB.crearUsuario({ nombre, email, password, idRol });
+      if (!resultado.ok) { mostrarAlertaUsuarios(resultado.error); return; }
+
+      mostrarAlertaUsuarios('Usuario creado con éxito.', 'exito');
+      document.getElementById('u-nombre').value   = '';
+      document.getElementById('u-email').value    = '';
+      document.getElementById('u-password').value = '';
+      document.getElementById('u-rol').value      = '2';
+      renderTablaUsuarios();
+    }
+
+    function borrarUsuarioAdmin(id) {
+      const sesionId = Auth.getSesion().id;
+      if (id === sesionId) {
+        mostrarAlertaUsuarios('No podés eliminar tu propia cuenta.'); return;
+      }
+      const u = DB.getUsuarios().find(u => u.id === id);
+      if (!u) return;
+      if (!confirm(`¿Borrar al usuario "${u.nombre}"? Esta acción no se puede deshacer.`)) return;
+      const resultado = DB.borrarUsuario(id);
+      if (!resultado.ok) { mostrarAlertaUsuarios(resultado.error); return; }
+      mostrarAlertaUsuarios('Usuario eliminado.', 'exito');
+      renderTablaUsuarios();
+    }
+
     // ── Inicializar ────────────────────────────────────────
     llenarCategorias();
     renderTablaProductos();
     renderTablaCompras();
+    renderTablaUsuarios();
   </script>
 </body>
 </html>

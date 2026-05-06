@@ -47,6 +47,14 @@ const DB = {
     return todos.find(u => u.email === email.toLowerCase()) || null;
   },
 
+  borrarUsuario(id) {
+    const usuarios = this.getUsuarios();
+    const nuevos = usuarios.filter(u => u.id !== id);
+    if (nuevos.length === usuarios.length) return { ok: false, error: 'Usuario no encontrado.' };
+    this._set('usuarios', nuevos);
+    return { ok: true };
+  },
+
   crearUsuario({ nombre, email, password, idRol = 2 }) {
     const usuarios = this.getUsuarios();
     const existente = usuarios.find(u => u.email === email.toLowerCase());
@@ -257,7 +265,7 @@ const DB = {
       { id: 2, nombre: 'Gato' },
       { id: 3, nombre: 'Ave' },
       { id: 4, nombre: 'Conejo' },
-      { id: 5, nombre: 'Hamsters' }
+      { id: 5, nombre: 'Hamster' }
     ]);
 
     // Usuario admin por defecto
