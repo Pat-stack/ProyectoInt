@@ -122,7 +122,7 @@ input, select, textarea { font: inherit; }
 }
 .btn-secundario:hover { background: #5a6268; }
 
-.btn-bloque { width: 100%; display: block; text-align: center; }
+.btn-bloque { width: 100%; display: block; text-align: center; border-radius: 6px !important; }
 
 /* ── Alertas ──────────────────────────────────────────────── */
 .alerta {
@@ -137,39 +137,50 @@ input, select, textarea { font: inherit; }
 /* ── Card genérica ────────────────────────────────────────── */
 .card {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.08);
-  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.15);
+  padding: 28px 32px;
 }
 
 /* ── Formularios ──────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .form-page {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 48px 16px;
+  align-items: center;
+  padding: 40px 16px;
   min-height: calc(100vh - 64px);
 }
 
-.form-card { max-width: 480px; width: 100%; }
-.form-card h1 { font-size: 1.6rem; margin-bottom: 4px; }
+.form-card {
+  max-width: 380px;
+  width: 100%;
+  animation: fadeIn 0.6s ease;
+}
+.form-card h1 { font-size: 1.8rem; margin-bottom: 4px; color: #333; font-weight: 700; }
 .form-sub { color: #666; margin-bottom: 24px; }
 .form-footer { text-align: center; margin-top: 16px; color: #666; font-size: 0.9rem; }
-.form-footer a { color: #ff8c42; font-weight: 600; }
+.form-footer a { color: #ce4109; font-weight: 600; }
 
-.campo { margin-bottom: 16px; }
-.campo label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+.campo { margin-bottom: 14px; }
+.campo label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; color: #444; }
 .campo input, .campo select {
   width: 100%;
-  padding: 10px 14px;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  transition: border-color 0.2s;
+  padding: 10px 12px;
+  border: 1.8px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fdfdfd;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 .campo input:focus, .campo select:focus {
   outline: none;
   border-color: #ff8c42;
+  box-shadow: 0 0 6px rgba(255,140,66,.4);
 }
 
 .campo-check { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 0.9rem; }
