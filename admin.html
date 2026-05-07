@@ -830,7 +830,8 @@
     .pie { margin-top:28px; text-align:center; font-size:0.72rem; color:#bbb;
            border-top:1px solid #eee; padding-top:12px; }
 
-    @media print { body { padding:16px; } }
+    @page { margin: 0; size: auto; }
+    @media print { body { padding:20px; -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
   </style>
 </head>
 <body>
