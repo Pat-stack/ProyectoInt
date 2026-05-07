@@ -281,10 +281,10 @@ const DB = {
     ]);
 
     this._set('categorias', [
-      { id: 1, nombre: 'Perro',   imagen: 'img_productos_base/categoria_Perro.jpg' },
-      { id: 2, nombre: 'Gato',    imagen: 'img_productos_base/categoria_Gato.jpg' },
-      { id: 3, nombre: 'Ave',     imagen: 'img_productos_base/categoria_Ave.jpg' },
-      { id: 4, nombre: 'Hamster', imagen: 'img_productos_base/categoria_Hamster.jpg' }
+      { id: 1, nombre: 'Perro',   imagen: 'imagenes_pagina/categoria_Perro.jpg' },
+      { id: 2, nombre: 'Gato',    imagen: 'imagenes_pagina/categoria_Gato.jpg' },
+      { id: 3, nombre: 'Ave',     imagen: 'imagenes_pagina/categoria_Ave.jpg' },
+      { id: 4, nombre: 'Hamster', imagen: 'imagenes_pagina/categoria_Hamster.jpg' }
     ]);
 
     this._set('usuarios', [
@@ -293,21 +293,21 @@ const DB = {
 
     this._set('articulos', [
       // Gatos
-      { id: 1,  nombre: 'Alimento para gato Urinary Care', descripcion: 'Alimento especial para gatos con problemas urinarios.',       precio: 280.00, stock: 25, idCategoria: 2, imagenBase64: 'img_productos_base/Alimento para gato Urinary Care.jpg' },
+      { id: 1,  nombre: 'Alimento para gato Urinary Care', descripcion: 'Alimento especial para gatos con problemas urinarios.',       precio: 280.00, stock: 25, idCategoria: 2, imagenBase64: 'img_productos_base/Alimento para gato Urinary Care.webp' },
       { id: 2,  nombre: 'Arena para gatos',                descripcion: 'Arena absorbente para caja de arena de gatos.',               precio: 150.00, stock: 40, idCategoria: 2, imagenBase64: 'img_productos_base/Arena para gatos.webp' },
-      { id: 3,  nombre: 'Arena para gatos fina',           descripcion: 'Arena fina de textura suave para mayor comodidad.',           precio: 120.00, stock: 35, idCategoria: 2, imagenBase64: 'img_productos_base/Arena para gatos fina.jpg' },
+      { id: 3,  nombre: 'Arena para gatos fina',           descripcion: 'Arena fina de textura suave para mayor comodidad.',           precio: 120.00, stock: 35, idCategoria: 2, imagenBase64: 'img_productos_base/Arena para gatos fina.webp' },
       { id: 4,  nombre: 'Comida para gato bebé',           descripcion: 'Alimento húmedo especial para gatitos en crecimiento.',       precio: 220.00, stock: 20, idCategoria: 2, imagenBase64: 'img_productos_base/Comida para gato bebé.jpg' },
-      { id: 5,  nombre: 'Correa para gato',                descripcion: 'Correa ajustable para paseos seguros con tu gato.',           precio:  95.00, stock: 30, idCategoria: 2, imagenBase64: 'img_productos_base/Correa para gato.jpg' },
-      { id: 6,  nombre: 'Juguetes para gato',              descripcion: 'Set de juguetes interactivos para entretener a tu gato.',     precio:  75.00, stock: 50, idCategoria: 2, imagenBase64: 'img_productos_base/Juguetes para gato.jpg' },
-      { id: 7,  nombre: 'Pechera para gato',               descripcion: 'Pechera cómoda y ajustable para gatos de todas las tallas.', precio: 110.00, stock: 25, idCategoria: 2, imagenBase64: 'img_productos_base/Pechera para gato.jpg' },
+      { id: 5,  nombre: 'Correa para gato',                descripcion: 'Correa ajustable para paseos seguros con tu gato.',           precio:  95.00, stock: 30, idCategoria: 2, imagenBase64: 'img_productos_base/Correa para gato.webp' },
+      { id: 6,  nombre: 'Juguetes para gato',              descripcion: 'Set de juguetes interactivos para entretener a tu gato.',     precio:  75.00, stock: 50, idCategoria: 2, imagenBase64: 'img_productos_base/Juguetes para gato.webp' },
+      { id: 7,  nombre: 'Pechera para gato',               descripcion: 'Pechera cómoda y ajustable para gatos de todas las tallas.', precio: 110.00, stock: 25, idCategoria: 2, imagenBase64: 'img_productos_base/Pechera para gato.webp' },
       // Hamsters
       { id: 8,  nombre: 'Comida para hamsters',            descripcion: 'Mezcla nutritiva de semillas y granos para hámsters.',       precio:  85.00, stock: 40, idCategoria: 4, imagenBase64: 'img_productos_base/Comida para hamsters.jpg' },
-      { id: 9,  nombre: 'Jaula para hamster',              descripcion: 'Jaula amplia con accesorios incluidos para hámster.',        precio: 380.00, stock: 15, idCategoria: 4, imagenBase64: 'img_productos_base/Jaula para hamster.jpg' },
+      { id: 9,  nombre: 'Jaula para hamster',              descripcion: 'Jaula amplia con accesorios incluidos para hámster.',        precio: 380.00, stock: 15, idCategoria: 4, imagenBase64: 'img_productos_base/Jaula para hamster.png' },
       { id: 10, nombre: 'Juguetes para hamsters',          descripcion: 'Set de juguetes y rueda de ejercicio para hámsters.',        precio:  65.00, stock: 35, idCategoria: 4, imagenBase64: 'img_productos_base/Juguetes para hamsters.jpg' },
-      { id: 11, nombre: 'Tubos para hamster',              descripcion: 'Tubos de exploración y diversión para hámsters.',            precio:  90.00, stock: 25, idCategoria: 4, imagenBase64: 'img_productos_base/Tubos para hamster.jpg' },
+      { id: 11, nombre: 'Tubos para hamster',              descripcion: 'Tubos de exploración y diversión para hámsters.',            precio:  90.00, stock: 25, idCategoria: 4, imagenBase64: 'img_productos_base/Tubos para hamster.webp' },
       // Perros
       { id: 12, nombre: 'Correa para perro',               descripcion: 'Correa resistente de nylon para perros de cualquier tamaño.', precio: 120.00, stock: 40, idCategoria: 1, imagenBase64: 'img_productos_base/Correa para perro.jpg' },
-      { id: 13, nombre: 'Croquetas para perro',            descripcion: 'Alimento balanceado y nutritivo para perros adultos.',       precio: 290.00, stock: 30, idCategoria: 1, imagenBase64: 'img_productos_base/Croquetas para perro.jpg' },
+      { id: 13, nombre: 'Croquetas para perro',            descripcion: 'Alimento balanceado y nutritivo para perros adultos.',       precio: 290.00, stock: 30, idCategoria: 1, imagenBase64: 'img_productos_base/Croquetas para perro.webp' },
       { id: 14, nombre: 'Juguetes para perro',             descripcion: 'Set de juguetes resistentes para la diversión de tu perro.', precio:  95.00, stock: 45, idCategoria: 1, imagenBase64: 'img_productos_base/Juguetes para perro.jpg' },
       // Aves
       { id: 15, nombre: 'Jaula para aves',                 descripcion: 'Jaula metálica espaciosa con comedero y bebedero.',         precio: 480.00, stock: 10, idCategoria: 3, imagenBase64: 'img_productos_base/Jaula para aves.jpg' },
