@@ -148,6 +148,7 @@
               <th>#</th>
               <th>Nombre</th>
               <th>Email</th>
+              <th>Fecha de nacimiento</th>
               <th>Rol</th>
               <th>Acciones</th>
             </tr>
@@ -520,6 +521,7 @@
           <td>${u.id}</td>
           <td>${u.nombre}</td>
           <td>${u.email}</td>
+          <td>${u.fechaNacimiento || '—'}</td>
           <td>${rolMap[u.idRol] || u.idRol}</td>
           <td>
             ${u.id === sesionId
