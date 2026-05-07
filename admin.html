@@ -235,9 +235,14 @@
       </p>
       <p style="color:#333;margin:0 0 8px;">Escribe <strong>Confirmar</strong> para continuar:</p>
       <input type="text" id="purga-input" placeholder="Confirmar"
+             oninput="this.style.borderColor='#ccc';document.getElementById('purga-error').style.display='none';"
              style="width:100%;padding:10px;border:2px solid #ccc;border-radius:8px;
-                    margin-bottom:16px;font-size:1rem;box-sizing:border-box;">
-      <div style="display:flex;gap:12px;">
+                    margin-bottom:6px;font-size:1rem;box-sizing:border-box;">
+      <p id="purga-error"
+         style="display:none;color:#c0392b;font-size:0.85rem;margin:0 0 12px;">
+        Debes escribir exactamente <strong>Confirmar</strong> para continuar.
+      </p>
+      <div style="display:flex;gap:12px;margin-top:10px;">
         <button class="btn-primario btn-bloque"
                 style="flex:1;background:linear-gradient(90deg,#c0392b,#e74c3c);"
                 onclick="confirmarPurga()">Purgar</button>
@@ -636,11 +641,17 @@
 
     function cerrarModalPurga() {
       document.getElementById('purga-overlay').style.display = 'none';
+      document.getElementById('purga-error').style.display = 'none';
+      document.getElementById('purga-input').style.borderColor = '#ccc';
     }
 
     function confirmarPurga() {
-      if (document.getElementById('purga-input').value !== 'Confirmar') {
-        document.getElementById('purga-input').style.borderColor = '#c0392b';
+      const input = document.getElementById('purga-input');
+      const error = document.getElementById('purga-error');
+      if (input.value !== 'Confirmar') {
+        input.style.borderColor = '#c0392b';
+        error.style.display = 'block';
+        input.focus();
         return;
       }
       DB.purgarDB();
