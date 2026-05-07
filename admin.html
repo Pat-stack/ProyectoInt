@@ -541,6 +541,10 @@
       if (!nombre || !email || !password || !fechaNac) {
         mostrarAlertaUsuarios('Completa todos los campos.'); return;
       }
+      const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!formatoEmail.test(email)) {
+        mostrarAlertaUsuarios('El correo no tiene un formato válido.'); return;
+      }
       if (password.length < 6) {
         mostrarAlertaUsuarios('La contraseña debe tener al menos 6 caracteres.'); return;
       }
