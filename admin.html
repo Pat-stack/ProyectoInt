@@ -272,6 +272,8 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="js/db.js"></script>
   <script src="js/auth.js"></script>
   <script>
@@ -733,10 +735,15 @@
     });
 
     // ── Exportar ventas ───────────────────────────────────
-    function exportarVentas() {
+    async function exportarVentas() {
+      if (!window.jspdf) {
+        alert('La librería de PDF aún está cargando, intenta en un momento.'); return;
+      }
       const compras   = DB.getCompras();
       const usuarios  = DB.getUsuarios();
       const articulos = DB.getArticulos();
+
+      if (compras.length === 0) { alert('No hay ventas para exportar.'); return; }
 
       const usuMap = {};
       usuarios.forEach(u => { usuMap[u.id] = u.nombre; });
@@ -744,142 +751,138 @@
       articulos.forEach(a => { artMap[a.id] = a; });
 
       const ordenadas = [...compras].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      const baseURL   = window.location.href.replace(/\/[^/]*$/, '/');
 
-      const baseURL = window.location.href.replace(/\/[^/]*$/, '/');
-      const ahora   = new Date().toLocaleString('es-MX');
+      // Convertir imagen a base64 (data URL o ruta relativa)
+      async function toBase64(art) {
+        if (!art?.imagenBase64) return null;
+        if (art.imagenBase64.startsWith('data:')) return art.imagenBase64;
+        try {
+          const r = await fetch(baseURL + art.imagenBase64);
+          if (!r.ok) return null;
+          const blob = await r.blob();
+          return new Promise(res => {
+            const reader = new FileReader();
+            reader.onload  = () => res(reader.result);
+            reader.onerror = () => res(null);
+            reader.readAsDataURL(blob);
+          });
+        } catch { return null; }
+      }
 
+      // Precargar todas las imágenes únicas
+      const artIds = new Set(ordenadas.flatMap(c => c.detalles.map(d => d.idArticulo)));
+      const imgMap = {};
+      await Promise.all([...artIds].map(async id => {
+        const b64 = await toBase64(artMap[id]);
+        if (b64) imgMap[id] = b64;
+      }));
+
+      // ── Construir PDF ─────────────────────────────────────
+      const { jsPDF } = window.jspdf;
+      const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+
+      const BROWN  = [58,  29,  14];
+      const ORANGE = [255, 140, 66];
+      const WHITE  = [255, 255, 255];
+      const CREAM  = [253, 240, 230];
+
+      // Cabecera
+      doc.setFillColor(...BROWN);
+      doc.rect(0, 0, pageW, 22, 'F');
+      doc.setTextColor(...WHITE);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.text('El Norteño Store', 12, 13);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text('Historial de Ventas', 12, 19);
+      doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, pageW - 12, 13, { align: 'right' });
+
+      // Tarjetas de resumen
       const totalVentas  = ordenadas.length;
       const totalIngreso = ordenadas.reduce((s, c) => s + c.total, 0);
 
-      function imgSrcAbs(art) {
-        if (!art || !art.imagenBase64) return '';
-        if (art.imagenBase64.startsWith('data:')) return art.imagenBase64;
-        return baseURL + art.imagenBase64;
-      }
+      [[`${totalVentas}`, 'Total de ventas', 12],
+       [`$${totalIngreso.toFixed(2)} MXN`, 'Ingreso total', 75]
+      ].forEach(([valor, etiq, x]) => {
+        doc.setFillColor(...BROWN);
+        doc.roundedRect(x, 27, 58, 16, 2.5, 2.5, 'F');
+        doc.setTextColor(...ORANGE);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(valor, x + 29, 35, { align: 'center' });
+        doc.setTextColor(...WHITE);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.text(etiq, x + 29, 40, { align: 'center' });
+      });
 
-      const filas = ordenadas.map(c => {
-        const cliente  = usuMap[c.idUsuario] || `Cliente #${c.idUsuario}`;
-        const fecha    = new Date(c.fecha).toLocaleString('es-MX');
-        const productos = c.detalles.map(d => {
-          const art = artMap[d.idArticulo];
-          const img = imgSrcAbs(art);
-          return `
-            <div class="prod-item">
-              ${img ? `<img src="${img}" alt="${d.nombre}">` : '<div class="prod-sin-img">?</div>'}
-              <div>
-                <div class="prod-nombre">${d.nombre}</div>
-                <div class="prod-cant">×${d.cantidad} — $${(d.precio * d.cantidad).toFixed(2)}</div>
-              </div>
-            </div>`;
-        }).join('');
+      // Tabla
+      const IMG  = 10;   // tamaño imagen en mm
+      const LINEH = 13;  // altura por producto
 
-        return `
-          <tr>
-            <td>#${c.id}</td>
-            <td>${cliente}</td>
-            <td>${fecha}</td>
-            <td>${productos}</td>
-            <td class="monto">$${c.subtotal.toFixed(2)}</td>
-            <td class="monto">$${c.iva.toFixed(2)}</td>
-            <td class="monto total-cel">$${c.total.toFixed(2)} MXN</td>
-          </tr>`;
-      }).join('');
+      doc.autoTable({
+        startY: 49,
+        head: [['#', 'Cliente', 'Fecha', 'Productos', 'Subtotal', 'IVA', 'Total']],
+        body: ordenadas.map(c => [
+          `#${c.id}`,
+          usuMap[c.idUsuario] || `#${c.idUsuario}`,
+          new Date(c.fecha).toLocaleString('es-MX'),
+          '',   // se dibuja manualmente
+          `$${c.subtotal.toFixed(2)}`,
+          `$${c.iva.toFixed(2)}`,
+          `$${c.total.toFixed(2)} MXN`
+        ]),
+        styles:          { fontSize: 7.5, cellPadding: 2.5, overflow: 'linebreak', valign: 'top' },
+        headStyles:      { fillColor: BROWN, textColor: WHITE, fontStyle: 'bold', fontSize: 8 },
+        alternateRowStyles: { fillColor: CREAM },
+        columnStyles: {
+          0: { cellWidth: 12 },
+          1: { cellWidth: 38 },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 82 },
+          4: { cellWidth: 24, halign: 'right' },
+          5: { cellWidth: 20, halign: 'right' },
+          6: { cellWidth: 32, halign: 'right', fontStyle: 'bold', textColor: [192, 57, 43] }
+        },
+        didParseCell(data) {
+          if (data.column.index !== 3 || data.section !== 'body') return;
+          const n = ordenadas[data.row.index]?.detalles.length || 1;
+          data.cell.styles.minCellHeight = n * LINEH + 3;
+          data.cell.text = [];
+        },
+        didDrawCell(data) {
+          if (data.column.index !== 3 || data.section !== 'body') return;
+          const sale = ordenadas[data.row.index];
+          if (!sale) return;
+          sale.detalles.forEach((d, i) => {
+            const y = data.cell.y + 2 + i * LINEH;
+            const img = imgMap[d.idArticulo];
+            if (img) {
+              try { doc.addImage(img, 'JPEG', data.cell.x + 1, y, IMG, IMG); } catch {}
+            }
+            const tx = data.cell.x + (img ? IMG + 3 : 2);
+            doc.setFontSize(7);   doc.setTextColor(45, 45, 45);
+            doc.text(d.nombre, tx, y + 5);
+            doc.setFontSize(6.5); doc.setTextColor(130, 130, 130);
+            doc.text(`×${d.cantidad}  —  $${(d.precio * d.cantidad).toFixed(2)}`, tx, y + 10);
+          });
+        }
+      });
 
-      const sinVentas = totalVentas === 0
-        ? '<tr><td colspan="7" style="text-align:center;padding:32px;color:#888;">Sin ventas registradas.</td></tr>'
-        : filas;
+      // Pie
+      const footY = doc.lastAutoTable.finalY + 7;
+      doc.setFontSize(6.5);
+      doc.setTextColor(180, 180, 180);
+      doc.text(
+        `El Norteño Store © ${new Date().getFullYear()} — Documento generado automáticamente`,
+        pageW / 2, footY, { align: 'center' }
+      );
 
-      const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Ventas — El Norteño Store</title>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Segoe UI',Arial,sans-serif; color:#2d2d2d; padding:36px; background:#fff; }
-
-    .encabezado { display:flex; justify-content:space-between; align-items:flex-end;
-                  border-bottom:3px solid #ff8c42; padding-bottom:14px; margin-bottom:28px; }
-    .encabezado h1 { font-size:1.7rem; color:#3a1d0e; }
-    .encabezado .sub { font-size:0.82rem; color:#888; margin-top:4px; }
-
-    .resumen { display:flex; gap:20px; margin-bottom:28px; }
-    .r-card { background:#3a1d0e; color:#fff; border-radius:10px; padding:16px 28px;
-              flex:1; text-align:center; }
-    .r-card .valor { font-size:1.5rem; font-weight:700; color:#ff8c42; }
-    .r-card .etiq  { font-size:0.78rem; opacity:.75; margin-top:4px; }
-
-    table { width:100%; border-collapse:collapse; font-size:0.8rem; }
-    thead tr { background:#3a1d0e; color:#fff; }
-    thead th { padding:11px 10px; text-align:left; white-space:nowrap; }
-    tbody tr:nth-child(even) { background:#fdf0e6; }
-    td { padding:10px; vertical-align:top; border-bottom:1px solid #e8ddd5; }
-
-    .prod-item { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
-    .prod-item img { width:38px; height:38px; object-fit:cover; border-radius:5px;
-                     border:1px solid #ddd; flex-shrink:0; }
-    .prod-sin-img { width:38px; height:38px; background:#eee; border-radius:5px;
-                    display:flex; align-items:center; justify-content:center;
-                    color:#aaa; font-size:1.1rem; flex-shrink:0; }
-    .prod-nombre { font-weight:600; font-size:0.79rem; }
-    .prod-cant   { color:#777; font-size:0.75rem; }
-
-    .monto     { font-weight:600; white-space:nowrap; }
-    .total-cel { color:#c0392b; font-weight:700; }
-
-    .pie { margin-top:28px; text-align:center; font-size:0.72rem; color:#bbb;
-           border-top:1px solid #eee; padding-top:12px; }
-
-    @page { margin: 0; size: auto; }
-    @media print { body { padding:20px; -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
-  </style>
-</head>
-<body>
-  <div class="encabezado">
-    <div>
-      <h1>El Norteño Store</h1>
-      <div class="sub">Historial de Ventas</div>
-    </div>
-    <div style="text-align:right; font-size:0.8rem; color:#888;">
-      Generado: ${ahora}
-    </div>
-  </div>
-
-  <div class="resumen">
-    <div class="r-card">
-      <div class="valor">${totalVentas}</div>
-      <div class="etiq">Total de ventas</div>
-    </div>
-    <div class="r-card">
-      <div class="valor">$${totalIngreso.toFixed(2)} MXN</div>
-      <div class="etiq">Ingreso total</div>
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Cliente</th>
-        <th>Fecha</th>
-        <th>Productos</th>
-        <th>Subtotal</th>
-        <th>IVA</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>${sinVentas}</tbody>
-  </table>
-
-  <div class="pie">El Norteño Store © ${new Date().getFullYear()} — Documento generado automáticamente</div>
-</body>
-</html>`;
-
-      const win = window.open('', '_blank');
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      setTimeout(() => win.print(), 600);
+      const fecha = new Date().toISOString().split('T')[0];
+      doc.save(`ventas-norteño-store-${fecha}.pdf`);
     }
 
     // ── Inicializar ────────────────────────────────────────
