@@ -780,7 +780,7 @@
 
       // ── Construir PDF ─────────────────────────────────────
       const { jsPDF } = window.jspdf;
-      const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const doc   = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
 
       const BROWN  = [58,  29,  14];
@@ -839,13 +839,13 @@
         headStyles:      { fillColor: BROWN, textColor: WHITE, fontStyle: 'bold', fontSize: 8 },
         alternateRowStyles: { fillColor: CREAM },
         columnStyles: {
-          0: { cellWidth: 12 },
-          1: { cellWidth: 38 },
-          2: { cellWidth: 40 },
-          3: { cellWidth: 82 },
-          4: { cellWidth: 24, halign: 'right' },
-          5: { cellWidth: 20, halign: 'right' },
-          6: { cellWidth: 32, halign: 'right', fontStyle: 'bold', textColor: [192, 57, 43] }
+          0: { cellWidth: 10 },
+          1: { cellWidth: 28 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 58 },
+          4: { cellWidth: 20, halign: 'right' },
+          5: { cellWidth: 16, halign: 'right' },
+          6: { cellWidth: 24, halign: 'right', fontStyle: 'bold', textColor: [192, 57, 43] }
         },
         didParseCell(data) {
           if (data.column.index !== 3 || data.section !== 'body') return;
