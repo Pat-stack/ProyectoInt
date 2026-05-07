@@ -58,7 +58,7 @@ input, select, textarea { font: inherit; }
 
 .navbar nav a {
   color: #ddd;
-  font-size: 0.9rem;
+  font-size: 1.35rem;
   transition: color 0.2s;
 }
 .navbar nav a:hover,
@@ -67,7 +67,7 @@ input, select, textarea { font: inherit; }
 .nav-bienvenida {
   color: #ff8c42;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1.35rem;
 }
 
 /* ── Botón carrito flotante (navbar) ──────────────────────── */

@@ -121,6 +121,9 @@
           <div class="campo">
             <label for="u-fecha-nac">Fecha de nacimiento</label>
             <input type="date" id="u-fecha-nac">
+            <small id="u-fecha-nac-error" style="color:#c0392b;display:none;">
+              La fecha de nacimiento debe ser anterior a hoy.
+            </small>
           </div>
         </div>
         <div class="campos-2col">
@@ -709,11 +712,18 @@
       if (e.target === this) cerrarModalPurga();
     });
 
-    // ── Inicializar ────────────────────────────────────────
-    const ayerAdmin = new Date();
-    ayerAdmin.setDate(ayerAdmin.getDate() - 1);
-    document.getElementById('u-fecha-nac').max = ayerAdmin.toISOString().split('T')[0];
+    document.getElementById('u-fecha-nac').addEventListener('change', function () {
+      const hoy = new Date().toISOString().split('T')[0];
+      const error = document.getElementById('u-fecha-nac-error');
+      if (this.value >= hoy) {
+        error.style.display = 'block';
+        this.value = '';
+      } else {
+        error.style.display = 'none';
+      }
+    });
 
+    // ── Inicializar ────────────────────────────────────────
     llenarCategorias();
     renderTablaProductos();
     renderTablaCategorias();

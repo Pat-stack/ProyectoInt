@@ -44,6 +44,9 @@
       <div class="campo">
         <label for="fecha-nac">Fecha de nacimiento</label>
         <input type="date" id="fecha-nac">
+        <small id="fecha-nac-error" style="color:#c0392b;display:none;">
+          La fecha de nacimiento debe ser anterior a hoy.
+        </small>
       </div>
 
       <div class="campo">
@@ -81,10 +84,16 @@
 
     if (Auth.isLoggedIn()) window.location.href = 'index.html';
 
-    // Limitar el date picker a ayer como máximo
-    const ayer = new Date();
-    ayer.setDate(ayer.getDate() - 1);
-    document.getElementById('fecha-nac').max = ayer.toISOString().split('T')[0];
+    document.getElementById('fecha-nac').addEventListener('change', function () {
+      const hoy = new Date().toISOString().split('T')[0];
+      const error = document.getElementById('fecha-nac-error');
+      if (this.value >= hoy) {
+        error.style.display = 'block';
+        this.value = '';
+      } else {
+        error.style.display = 'none';
+      }
+    });
 
     // Mostrar / ocultar contraseñas
     document.getElementById('mostrar-pwd').addEventListener('change', function () {
