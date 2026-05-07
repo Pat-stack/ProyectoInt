@@ -47,7 +47,7 @@ input, select, textarea { font: inherit; }
   display: flex;
   align-items: center;
 }
-.nav-logo-img { height: 58px; width: auto; }
+.nav-logo-img { height: 116px; width: auto; }
 
 .navbar nav {
   display: flex;
