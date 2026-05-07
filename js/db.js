@@ -86,7 +86,7 @@ const DB = {
     return { ok: true };
   },
 
-  crearUsuario({ nombre, email, password, idRol = 2 }) {
+  crearUsuario({ nombre, email, password, idRol = 2, fechaNacimiento = '' }) {
     const usuarios = this.getUsuarios();
     const existente = usuarios.find(u => u.email === email.toLowerCase());
     if (existente) return { ok: false, error: 'El email ya está registrado.' };
@@ -95,7 +95,8 @@ const DB = {
       nombre,
       email: email.toLowerCase(),
       password,
-      idRol
+      idRol,
+      fechaNacimiento
     };
     usuarios.push(nuevo);
     this._set('usuarios', usuarios);

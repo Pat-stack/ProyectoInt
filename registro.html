@@ -42,6 +42,11 @@
       </div>
 
       <div class="campo">
+        <label for="fecha-nac">Fecha de nacimiento</label>
+        <input type="date" id="fecha-nac">
+      </div>
+
+      <div class="campo">
         <label for="email">Correo electrónico</label>
         <input type="email" id="email" placeholder="ejemplo@correo.com" autocomplete="email">
       </div>
@@ -76,6 +81,11 @@
 
     if (Auth.isLoggedIn()) window.location.href = 'index.html';
 
+    // Limitar el date picker a ayer como máximo
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    document.getElementById('fecha-nac').max = ayer.toISOString().split('T')[0];
+
     // Mostrar / ocultar contraseñas
     document.getElementById('mostrar-pwd').addEventListener('change', function () {
       const tipo = this.checked ? 'text' : 'password';
@@ -84,13 +94,14 @@
     });
 
     document.getElementById('btn-registro').addEventListener('click', () => {
-      const nombre    = document.getElementById('nombre').value.trim();
-      const apellidoP = document.getElementById('apellido-p').value.trim();
-      const apellidoM = document.getElementById('apellido-m').value.trim();
-      const email     = document.getElementById('email').value.trim();
-      const password  = document.getElementById('password').value;
-      const confirmar = document.getElementById('confirmar').value;
-      const mensajeEl = document.getElementById('mensaje');
+      const nombre      = document.getElementById('nombre').value.trim();
+      const apellidoP   = document.getElementById('apellido-p').value.trim();
+      const apellidoM   = document.getElementById('apellido-m').value.trim();
+      const fechaNac    = document.getElementById('fecha-nac').value;
+      const email       = document.getElementById('email').value.trim();
+      const password    = document.getElementById('password').value;
+      const confirmar   = document.getElementById('confirmar').value;
+      const mensajeEl   = document.getElementById('mensaje');
 
       const mostrar = (texto, tipo = 'error') => {
         mensajeEl.textContent  = texto;
@@ -101,8 +112,13 @@
       mensajeEl.style.display = 'none';
 
       // Validaciones
-      if (!nombre || !apellidoP || !apellidoM || !email || !password || !confirmar) {
+      if (!nombre || !apellidoP || !apellidoM || !fechaNac || !email || !password || !confirmar) {
         mostrar('Por favor completa todos los campos.'); return;
+      }
+
+      const hoy = new Date().toISOString().split('T')[0];
+      if (fechaNac >= hoy) {
+        mostrar('La fecha de nacimiento debe ser anterior a hoy.'); return;
       }
 
       const soloLetras = /^[A-Za-zÀ-ÿ\s]+$/;
@@ -117,7 +133,7 @@
       if (password !== confirmar) { mostrar('Las contraseñas no coinciden.'); return; }
 
       const nombreCompleto = `${nombre} ${apellidoP} ${apellidoM}`;
-      const resultado = Auth.registrar({ nombre: nombreCompleto, email, password });
+      const resultado = Auth.registrar({ nombre: nombreCompleto, email, password, fechaNacimiento: fechaNac });
 
       if (!resultado.ok) { mostrar(resultado.error); return; }
 

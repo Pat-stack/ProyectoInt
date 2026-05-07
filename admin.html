@@ -119,6 +119,12 @@
             <input type="password" id="u-password" placeholder="Mínimo 6 caracteres">
           </div>
           <div class="campo">
+            <label for="u-fecha-nac">Fecha de nacimiento</label>
+            <input type="date" id="u-fecha-nac">
+          </div>
+        </div>
+        <div class="campos-2col">
+          <div class="campo">
             <label for="u-rol">Rol</label>
             <select id="u-rol">
               <option value="2">Cliente</option>
@@ -523,26 +529,32 @@
     }
 
     function crearUsuarioAdmin() {
-      const nombre   = document.getElementById('u-nombre').value.trim();
-      const email    = document.getElementById('u-email').value.trim();
-      const password = document.getElementById('u-password').value;
-      const idRol    = parseInt(document.getElementById('u-rol').value);
+      const nombre    = document.getElementById('u-nombre').value.trim();
+      const email     = document.getElementById('u-email').value.trim();
+      const password  = document.getElementById('u-password').value;
+      const fechaNac  = document.getElementById('u-fecha-nac').value;
+      const idRol     = parseInt(document.getElementById('u-rol').value);
 
-      if (!nombre || !email || !password) {
+      if (!nombre || !email || !password || !fechaNac) {
         mostrarAlertaUsuarios('Completa todos los campos.'); return;
       }
       if (password.length < 6) {
         mostrarAlertaUsuarios('La contraseña debe tener al menos 6 caracteres.'); return;
       }
+      const hoy = new Date().toISOString().split('T')[0];
+      if (fechaNac >= hoy) {
+        mostrarAlertaUsuarios('La fecha de nacimiento debe ser anterior a hoy.'); return;
+      }
 
-      const resultado = DB.crearUsuario({ nombre, email, password, idRol });
+      const resultado = DB.crearUsuario({ nombre, email, password, idRol, fechaNacimiento: fechaNac });
       if (!resultado.ok) { mostrarAlertaUsuarios(resultado.error); return; }
 
       mostrarAlertaUsuarios('Usuario creado con éxito.', 'exito');
-      document.getElementById('u-nombre').value   = '';
-      document.getElementById('u-email').value    = '';
-      document.getElementById('u-password').value = '';
-      document.getElementById('u-rol').value      = '2';
+      document.getElementById('u-nombre').value    = '';
+      document.getElementById('u-email').value     = '';
+      document.getElementById('u-password').value  = '';
+      document.getElementById('u-fecha-nac').value = '';
+      document.getElementById('u-rol').value       = '2';
       renderTablaUsuarios();
     }
 
@@ -698,6 +710,10 @@
     });
 
     // ── Inicializar ────────────────────────────────────────
+    const ayerAdmin = new Date();
+    ayerAdmin.setDate(ayerAdmin.getDate() - 1);
+    document.getElementById('u-fecha-nac').max = ayerAdmin.toISOString().split('T')[0];
+
     llenarCategorias();
     renderTablaProductos();
     renderTablaCategorias();

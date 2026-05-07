@@ -49,8 +49,8 @@ const Auth = {
   },
 
   // Registrar nuevo usuario: retorna { ok, error? }
-  registrar({ nombre, email, password }) {
-    const resultado = DB.crearUsuario({ nombre, email, password, idRol: 2 });
+  registrar({ nombre, email, password, fechaNacimiento }) {
+    const resultado = DB.crearUsuario({ nombre, email, password, idRol: 2, fechaNacimiento });
     return resultado;
   },
 
