@@ -42,7 +42,6 @@ const Auth = {
   // Intentar login: retorna { ok, error?, sesion? }
   intentarLogin(email, password) {
     const usuario = DB.getUsuarioByEmail(email);
-    console.log("Usuario: " + usuario);
     if (!usuario) return { ok: false, error: 'Correo o contraseña incorrectos.' };
     if (usuario.password !== password) return { ok: false, error: 'Correo o contraseña incorrectos.' };
     const sesion = this.login(usuario);

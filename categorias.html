@@ -75,20 +75,12 @@
       window.location.href = 'index.html';
     });
 
-    const IMAGENES = {
-      Perro:    'imagenes_pagina/Perro.jpg',
-      Gato:     'imagenes_pagina/gatito.jpg',
-      Ave:      'imagenes_pagina/aves.jpg',
-      Conejo:   'imagenes_pagina/Conejo.png',
-      Hamsters: 'imagenes_pagina/hamster.jpg'
-    };
-
     const cats = DB.getCategorias();
     const grid  = document.getElementById('cats-grande');
 
     grid.innerHTML = cats.map(c => `
       <a href="catalogo.html?categoria=${encodeURIComponent(c.nombre)}" class="cat-card-grande">
-        <img src="${IMAGENES[c.nombre] || ''}" alt="${c.nombre}">
+        <img src="${c.imagen || ''}" alt="${c.nombre}">
         <h3>${c.nombre}s</h3>
       </a>
     `).join('');

@@ -185,6 +185,19 @@
       </div>
     </section>
 
+    <!-- ── ZONA DE PELIGRO ────────────────────────────── -->
+    <section class="admin-section" style="border:2px solid #c0392b;">
+      <h2 style="color:#c0392b;">Zona de Peligro</h2>
+      <p style="margin-bottom:16px;color:#555;">
+        Esta acción elimina <strong>toda la base de datos</strong> y la restaura con los datos por defecto.
+        Se cerrará la sesión al finalizar.
+      </p>
+      <button class="btn-primario" style="background:linear-gradient(90deg,#c0392b,#e74c3c);"
+              onclick="mostrarModalPurga()">
+        Purgar Base de Datos
+      </button>
+    </section>
+
     <!-- ── HISTORIAL DE COMPRAS ───────────────────────── -->
     <section class="admin-section">
       <h2>Historial de Compras</h2>
@@ -208,6 +221,31 @@
       </div>
     </section>
   </main>
+
+  <!-- ── Modal purgar DB ──────────────────────────────────── -->
+  <div id="purga-overlay"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+              z-index:2000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;
+                width:90%;box-shadow:0 20px 50px rgba(0,0,0,.35);">
+      <h3 style="color:#c0392b;margin:0 0 12px;">⚠️ ¿Estás seguro?</h3>
+      <p style="color:#555;margin:0 0 20px;">
+        Esta acción <strong>no se puede deshacer</strong>. Se borrarán todos los usuarios,
+        productos, compras y categorías, y se restaurarán los datos por defecto.
+      </p>
+      <p style="color:#333;margin:0 0 8px;">Escribe <strong>Confirmar</strong> para continuar:</p>
+      <input type="text" id="purga-input" placeholder="Confirmar"
+             style="width:100%;padding:10px;border:2px solid #ccc;border-radius:8px;
+                    margin-bottom:16px;font-size:1rem;box-sizing:border-box;">
+      <div style="display:flex;gap:12px;">
+        <button class="btn-primario btn-bloque"
+                style="flex:1;background:linear-gradient(90deg,#c0392b,#e74c3c);"
+                onclick="confirmarPurga()">Purgar</button>
+        <button class="btn-secundario btn-bloque" style="flex:1;"
+                onclick="cerrarModalPurga()">Cancelar</button>
+      </div>
+    </div>
+  </div>
 
   <script src="js/db.js"></script>
   <script src="js/auth.js"></script>
@@ -587,6 +625,31 @@
       renderTablaCategorias();
       llenarCategorias();
     }
+
+    // ── Purgar DB ─────────────────────────────────────────
+    function mostrarModalPurga() {
+      const overlay = document.getElementById('purga-overlay');
+      overlay.style.display = 'flex';
+      document.getElementById('purga-input').value = '';
+      setTimeout(() => document.getElementById('purga-input').focus(), 50);
+    }
+
+    function cerrarModalPurga() {
+      document.getElementById('purga-overlay').style.display = 'none';
+    }
+
+    function confirmarPurga() {
+      if (document.getElementById('purga-input').value !== 'Confirmar') {
+        document.getElementById('purga-input').style.borderColor = '#c0392b';
+        return;
+      }
+      DB.purgarDB();
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('purga-overlay').addEventListener('click', function (e) {
+      if (e.target === this) cerrarModalPurga();
+    });
 
     // ── Inicializar ────────────────────────────────────────
     llenarCategorias();
