@@ -521,7 +521,7 @@
           <td>${u.id}</td>
           <td>${u.nombre}</td>
           <td>${u.email}</td>
-          <td>${u.fechaNacimiento || '—'}</td>
+          <td>${u.fechaNacimiento ? u.fechaNacimiento.split('-').reverse().join(' - ') : '—'}</td>
           <td>${rolMap[u.idRol] || u.idRol}</td>
           <td>
             ${u.id === sesionId
