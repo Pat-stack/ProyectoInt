@@ -162,6 +162,13 @@
           <label for="cat-nombre">Nombre de la categoría</label>
           <input type="text" id="cat-nombre" placeholder="Ej: Reptil">
         </div>
+        <div class="campo">
+          <label for="cat-imagen">Imagen de la categoría</label>
+          <input type="file" id="cat-imagen" accept="image/*">
+          <div id="cat-imagen-preview-container" style="display:none; margin-top:8px;">
+            <img id="cat-imagen-preview" style="max-width:120px; max-height:120px; border-radius:6px;">
+          </div>
+        </div>
         <div class="admin-form-acciones">
           <button id="cat-btn-guardar" class="btn-primario" onclick="guardarCategoria()">Agregar Categoría</button>
           <button id="cat-btn-cancelar" class="btn-secundario" style="display:none" onclick="cancelarEdicionCategoria()">Cancelar</button>
@@ -555,6 +562,20 @@
 
     // ── Categorías ────────────────────────────────────────
 
+    let imagenCatActual = '';
+
+    document.getElementById('cat-imagen').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        imagenCatActual = e.target.result;
+        document.getElementById('cat-imagen-preview').src = imagenCatActual;
+        document.getElementById('cat-imagen-preview-container').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
     function mostrarAlertaCat(texto, tipo = 'error') {
       const el = document.getElementById('cat-alerta');
       el.textContent   = texto;
@@ -590,33 +611,47 @@
       if (!nombre) { mostrarAlertaCat('Ingresá un nombre para la categoría.'); return; }
 
       const resultado = editId
-        ? DB.editarCategoria(parseInt(editId), nombre)
-        : DB.crearCategoria(nombre);
+        ? DB.editarCategoria(parseInt(editId), nombre, imagenCatActual || undefined)
+        : DB.crearCategoria(nombre, imagenCatActual);
 
       if (!resultado.ok) { mostrarAlertaCat(resultado.error); return; }
 
       mostrarAlertaCat(editId ? 'Categoría actualizada.' : 'Categoría creada.', 'exito');
       cancelarEdicionCategoria();
       renderTablaCategorias();
-      llenarCategorias();   // actualiza el select de productos
+      llenarCategorias();
     }
 
     function iniciarEdicionCategoria(id) {
       const cat = DB.getCategoriaById(id);
       if (!cat) return;
-      document.getElementById('cat-edit-id').value  = cat.id;
-      document.getElementById('cat-nombre').value   = cat.nombre;
-      document.getElementById('cat-form-titulo').textContent  = 'Editar Categoría';
-      document.getElementById('cat-btn-guardar').textContent  = 'Guardar Cambios';
-      document.getElementById('cat-btn-cancelar').style.display = 'inline-block';
+      document.getElementById('cat-edit-id').value = cat.id;
+      document.getElementById('cat-nombre').value  = cat.nombre;
+
+      imagenCatActual = cat.imagen || '';
+      const preview = document.getElementById('cat-imagen-preview');
+      const cont    = document.getElementById('cat-imagen-preview-container');
+      if (imagenCatActual) {
+        preview.src        = imagenCatActual;
+        cont.style.display = 'block';
+      } else {
+        cont.style.display = 'none';
+      }
+
+      document.getElementById('cat-form-titulo').textContent       = 'Editar Categoría';
+      document.getElementById('cat-btn-guardar').textContent       = 'Guardar Cambios';
+      document.getElementById('cat-btn-cancelar').style.display    = 'inline-block';
       window.scrollTo({ top: document.getElementById('cat-form-titulo').offsetTop - 80, behavior: 'smooth' });
     }
 
     function cancelarEdicionCategoria() {
-      document.getElementById('cat-edit-id').value  = '';
-      document.getElementById('cat-nombre').value   = '';
-      document.getElementById('cat-form-titulo').textContent  = 'Agregar Categoría';
-      document.getElementById('cat-btn-guardar').textContent  = 'Agregar Categoría';
+      document.getElementById('cat-edit-id').value          = '';
+      document.getElementById('cat-nombre').value           = '';
+      document.getElementById('cat-imagen').value           = '';
+      document.getElementById('cat-imagen-preview-container').style.display = 'none';
+      imagenCatActual = '';
+      document.getElementById('cat-form-titulo').textContent    = 'Agregar Categoría';
+      document.getElementById('cat-btn-guardar').textContent    = 'Agregar Categoría';
       document.getElementById('cat-btn-cancelar').style.display = 'none';
     }
 

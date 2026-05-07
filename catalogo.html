@@ -221,6 +221,11 @@
     filtrar();
 
     document.getElementById('buscador').addEventListener('input', filtrar);
+
+    document.addEventListener('compra-realizada', () => {
+      todosLosProductos = DB.getArticulos();
+      filtrar();
+    });
   </script>
 </body>
 </html>

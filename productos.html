@@ -136,14 +136,14 @@
     }
 
     // 3 productos aleatorios
-    const todos = DB.getArticulos();
     const cats  = DB.getCategorias();
     const catMap = {};
     cats.forEach(c => { catMap[c.id] = c.nombre; });
 
-    const mezcla = [...todos].sort(() => Math.random() - 0.5).slice(0, 3);
-
-    document.getElementById('destacados-grid').innerHTML = mezcla.map(p => `
+    function renderDestacados() {
+      const todos  = DB.getArticulos();
+      const mezcla = [...todos].sort(() => Math.random() - 0.5).slice(0, 3);
+      document.getElementById('destacados-grid').innerHTML = mezcla.map(p => `
       <div class="producto-card">
         <img src="${imgSrc(p)}" alt="${p.nombre}" class="producto-img">
         <div class="producto-info">
@@ -164,7 +164,12 @@
           </button>
         </div>
       </div>
-    `).join('');
+      `).join('');
+    }
+
+    renderDestacados();
+
+    document.addEventListener('compra-realizada', renderDestacados);
   </script>
 </body>
 </html>

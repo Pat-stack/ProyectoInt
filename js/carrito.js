@@ -190,6 +190,7 @@ const Carrito = {
     this.cerrar();
     alert('¡Compra realizada con éxito! Gracias por tu compra. 🎉');
     this.renderizar();
+    document.dispatchEvent(new CustomEvent('compra-realizada'));
   },
 
   // ── Inicializar (llamar en DOMContentLoaded) ──────────────
